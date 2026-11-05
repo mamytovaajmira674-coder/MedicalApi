@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <h2>Тест POST запроса</h2>
+    <button onclick="sendPost()">Отправить справку</button>
+    <p id="result"></p>
+
+    <script>
+        async function sendPost() {
+            const response = await fetch('http://localhost:5137/api/spravki', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: "Справка 083", patientName: "Иван", price: 100 })
+            });
+            const data = await response.json();
+            document.getElementById('result').innerText = "Ответ сервера: " + JSON.stringify(data);
+        }
+    </script>
+</body>
+</html>
