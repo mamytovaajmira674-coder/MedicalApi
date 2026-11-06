@@ -1,19 +1,59 @@
 <!DOCTYPE html>
 <html>
 <body>
-    <h2>Тест POST запроса</h2>
-    <button onclick="sendPost()">Отправить справку</button>
+    <h2>Тест пациента</h2>
+    
+    <h3>Создать (POST)</h3>
+    <button onclick="sendPost()">Создать пациента</button>
+
+    <h3>Обновить (PUT) - несуществующий ID 999</h3>
+    <button onclick="sendPut999()">Обновить пациента с ID 999</button>
+
+    <h3>Удалить (DELETE)</h3>
+    <button onclick="sendDelete()">Удалить пациента с ID 1</button>
+
+    <h3>Проверка: справка по виду 3 (цена из каталога)</h3>
+    <button onclick="sendSpravkaType3()">Создать справку (вид 3, цена 9999)</button>
+
     <p id="result"></p>
 
     <script>
+        const url = 'http://localhost:5137/api/patients';
+
         async function sendPost() {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: "Новый Пациент", birthDate: "2000-01-01", phoneNumber: "123", isMale: true, address: "Бишкек" })
+            });
+            const data = await response.json();
+            document.getElementById('result').innerText = "POST ответ: " + JSON.stringify(data);
+        }
+
+        async function sendPut999() {
+            const response = await fetch(url + '/999', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: "Иван Обновленный", birthDate: "1990-05-20", phoneNumber: "999", isMale: true, address: "Ош" })
+            });
+            document.getElementById('result').innerText = "PUT (999) ответ: Код " + response.status;
+        }
+
+        async function sendDelete() {
+            const response = await fetch(url + '/1', {
+                method: 'DELETE'
+            });
+            document.getElementById('result').innerText = "DELETE ответ: Код " + response.status;
+        }
+
+        async function sendSpravkaType3() {
             const response = await fetch('http://localhost:5137/api/spravki', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: "Справка 083", patientName: "Иван", price: 100 })
+                body: JSON.stringify({ patientId: 1, spravkaTypeId: 3, price: 9999 })
             });
             const data = await response.json();
-            document.getElementById('result').innerText = "Ответ сервера: " + JSON.stringify(data);
+            document.getElementById('result').innerText = "Ответ: " + JSON.stringify(data);
         }
     </script>
 </body>

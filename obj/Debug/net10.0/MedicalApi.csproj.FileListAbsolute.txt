@@ -32,3 +32,4 @@ C:\Users\EVO\OneDrive\Desktop\MedicalApi\obj\Debug\net10.0\MedicalApi.pdb
 C:\Users\EVO\OneDrive\Desktop\MedicalApi\obj\Debug\net10.0\MedicalApi.genruntimeconfig.cache
 C:\Users\EVO\OneDrive\Desktop\MedicalApi\obj\Debug\net10.0\ref\MedicalApi.dll
 C:\Users\EVO\OneDrive\Desktop\MedicalApi\bin\Debug\net10.0\Swashbuckle.AspNetCore.SwaggerUI.dll
+C:\Users\EVO\OneDrive\Desktop\MedicalApi\obj\Debug\net10.0\MedicalApi.sourcelink.json
