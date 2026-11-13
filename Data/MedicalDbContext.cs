@@ -12,6 +12,7 @@ public class MedicalDbContext : DbContext
     public DbSet<Patient> Patients { get; set; }
     public DbSet<Spravka> Spravki { get; set; }
     public DbSet<SpravkaType> SpravkaTypes { get; set; }
+    public DbSet<Appointment> Appointments { get; set; }
     // сюда же таблица вашего модуля
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

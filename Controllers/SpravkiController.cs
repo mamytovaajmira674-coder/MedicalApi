@@ -1,103 +1,78 @@
 using Microsoft.AspNetCore.Mvc;
 using MedicalApi.Models;
+using MedicalApi.Data;
+using Microsoft.EntityFrameworkCore;
 
 [ApiController]
 [Route("api/[controller]")]
-public class SpravkiController : ControllerBase
+public class SpravkaTypeController : ControllerBase
 {
-    public static List<Spravka> _spravki = new List<Spravka>();
+    private readonly MedicalDbContext _db;
 
+    public SpravkaTypeController(MedicalDbContext db)
+    {
+        _db = db;
+    }
+
+    // GET: api/SpravkaType
     [HttpGet]
-    public List<Spravka> GetAl(int? patientId = null)
+    public async Task<ActionResult<List<SpravkaType>>> GetAll()
     {
-        if (patientId == null)
-        {
-            return _spravki;// Если ID не передан, возвращаем все справки
-        }
-        return _spravki.Where(s=> s.PatientId == patientId).ToList(); // Иначе — только справки этого пациента
-
+        return await _db.SpravkaTypes.ToListAsync();
     }
 
+    // GET: api/SpravkaType/5
     [HttpGet("{id}")]
-    public ActionResult<Spravka> GetById(int id)
+    public async Task<ActionResult<SpravkaType>> GetById(int id)
     {
-        var s = _spravki.FirstOrDefault(x => x.Id == id);
-        if (s == null) return NotFound();
-        return s;
+        var type = await _db.SpravkaTypes.FirstOrDefaultAsync(t => t.Id == id);
+        if (type == null) return NotFound();
+        return type;
     }
 
+    // POST: api/SpravkaType
     [HttpPost]
-    public ActionResult<Spravka> Create(Spravka spravka)
+    public async Task<ActionResult<SpravkaType>> Create(SpravkaType spravkaType)
     {
-        var error = Validate(spravka);
-        if (error != null) return BadRequest(error);
+        // Проверка: цена должна быть больше 0 (как в SQL-ограничении)
+        if (spravkaType.Price <= 0)
+            return BadRequest("Цена должна быть больше 0");
 
-        // Проверка, что пациент существует
-        var patientExists = PatientsController.Patients.Any(p => p.Id == spravka.PatientId);
-        if (!patientExists) return BadRequest("Пациент с таким ID не найден");
-
-        // ДОБАВЛЕНО: ищем вид в каталоге
-        var type = SpravkaTypesController.Types.FirstOrDefault(t => t.Id == spravka.SpravkaTypeId);
-        if (type == null) return BadRequest("Вид справки с таким ID не найден");
-
-        // ДОБАВЛЕНО: название и цену берем из каталога
-        spravka.Name = type.Name;
-        spravka.Price = type.Price;
-
-        spravka.Id = _spravki.Any() ? _spravki.Max(s=> s.Id) + 1:1;
-        _spravki.Add(spravka);
-        return CreatedAtAction(nameof(GetById), new { id = spravka.Id }, spravka);
+        _db.SpravkaTypes.Add(spravkaType);
+        await _db.SaveChangesAsync();
+        return CreatedAtAction(nameof(GetById), new { id = spravkaType.Id }, spravkaType);
     }
 
+    // PUT: api/SpravkaType/5
     [HttpPut("{id}")]
-    public ActionResult<Spravka> Update(int id, Spravka spravka)
+    public async Task<ActionResult<SpravkaType>> Update(int id, SpravkaType spravkaType)
     {
-        var existing = _spravki.FirstOrDefault(s => s.Id == id);
+        var existing = await _db.SpravkaTypes.FirstOrDefaultAsync(t => t.Id == id);
         if (existing == null) return NotFound();
 
-        var error = Validate(spravka);
-        if (error != null) return BadRequest(error);
+        if (spravkaType.Price <= 0)
+            return BadRequest("Цена должна быть больше 0");
 
-        var patientExists = PatientsController.Patients.Any(p => p.Id == spravka.PatientId);
-        if (!patientExists) return BadRequest("Пациент с таким ID не найден");
+        existing.Name = spravkaType.Name;
+        existing.Price = spravkaType.Price;
+        existing.ValidDays = spravkaType.ValidDays;
+        
+        // Если у вас есть поле NeedDoctor, раскомментируйте строчку ниже:
+        // existing.NeedDoctor = spravkaType.NeedDoctor;
 
-        var type = SpravkaTypesController.Types.FirstOrDefault(t => t.Id == spravka.SpravkaTypeId);
-        if (type == null) return BadRequest("Вид справки с таким ID не найден");
-
-        existing.Name = type.Name;
-        existing.Price = type.Price;
-        existing.PatientId = spravka.PatientId;
-        existing.SpravkaTypeId = spravka.SpravkaTypeId;
-
+        await _db.SaveChangesAsync();
         return Ok(existing);
     }
 
+    // DELETE: api/SpravkaType/5
     [HttpDelete("{id}")]
-    public ActionResult Delete(int id)
+    public async Task<ActionResult> Delete(int id)
     {
-        var existing = _spravki.FirstOrDefault(s => s.Id == id);
+        var existing = await _db.SpravkaTypes.FirstOrDefaultAsync(t => t.Id == id);
         if (existing == null) return NotFound();
-        _spravki.Remove(existing);
+
+        _db.SpravkaTypes.Remove(existing);
+        await _db.SaveChangesAsync();
         return NoContent();
-    }
-
-    private string? Validate(Spravka spravka)
-    {
-        // Проверку названия и цены убрали, так как они берутся из каталога
-        if (spravka.PatientId <= 0) return "ID пациента должен быть больше 0";
-        if (spravka.SpravkaTypeId <= 0) return "ID вида справки должен быть больше 0";
-        return null;
-    }
-        [HttpGet("stats")]
-    public ActionResult<object> GetStats()
-    {
-        var totalCount = _spravki.Count; // Сколько всего справок
-        var totalSum = _spravki.Sum(s => s.Price); // На какую сумму
-
-        return Ok(new
-        {
-            TotalSpravki = totalCount,
-            TotalPrice = totalSum
-        });
     }
 }

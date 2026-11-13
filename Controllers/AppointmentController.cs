@@ -1,48 +1,60 @@
 using Microsoft.AspNetCore.Mvc;
 using MedicalApi.Models;
+using MedicalApi.Data;
+using Microsoft.EntityFrameworkCore;
 
 [ApiController]
 [Route("api/[controller]")]
 public class AppointmentsController : ControllerBase
 {
-    private static List<Appointment> _appointments = new List<Appointment>();
+    private readonly MedicalDbContext _db;
+
+    public AppointmentsController(MedicalDbContext db)
+    {
+        _db = db;
+    }
 
     [HttpGet]
-    public List<Appointment> GetAll() => _appointments;
+    public async Task<ActionResult<List<Appointment>>> GetAll()
+    {
+        return await _db.Appointments.ToListAsync();
+    }
 
     [HttpGet("{id}")]
-    public ActionResult<Appointment> GetById(int id)
+    public async Task<ActionResult<Appointment>> GetById(int id)
     {
-        var a = _appointments.FirstOrDefault(x => x.Id == id);
+        var a = await _db.Appointments.FirstOrDefaultAsync(x => x.Id == id);
         if (a == null) return NotFound();
         return a;
     }
 
     [HttpPost]
-    public ActionResult<Appointment> Create(Appointment appointment)
+    public async Task<ActionResult<Appointment>> Create(Appointment appointment)
     {
-        // ДОБАВЛЕНО: проверки данных
+        // Проверки данных
         if (appointment.PatientId <= 0)
             return BadRequest("ID пациента должен быть больше 0");
         if (string.IsNullOrWhiteSpace(appointment.DoctorName))
             return BadRequest("Имя врача не может быть пустым");
+            
+        // ВНИМАНИЕ: Если у вас ошибка с DateTime, замените проверку ниже
         if (appointment.AppointmentDate < DateTime.Now)
             return BadRequest("Дата записи не может быть в прошлом");
 
-        // ДОБАВЛЕНО: проверка, что пациент существует
-        var patientExists = PatientsController.Patients.Any(p => p.Id == appointment.PatientId);
+        // Проверка, что пациент существует (через базу данных)
+        var patientExists = await _db.Patients.AnyAsync(p => p.Id == appointment.PatientId);
         if (!patientExists)
             return BadRequest("Пациент с таким ID не найден");
 
-        appointment.Id = _appointments.Any() ? _appointments.Max(a=> a.Id) +1 : 1;
-        _appointments.Add(appointment);
+        _db.Appointments.Add(appointment);
+        await _db.SaveChangesAsync();
         return CreatedAtAction(nameof(GetById), new { id = appointment.Id }, appointment);
     }
 
     [HttpPut("{id}")]
-    public ActionResult<Appointment> Update(int id, Appointment appointment)
+    public async Task<ActionResult<Appointment>> Update(int id, Appointment appointment)
     {
-        var existing = _appointments.FirstOrDefault(a => a.Id == id);
+        var existing = await _db.Appointments.FirstOrDefaultAsync(a => a.Id == id);
         if (existing == null) return NotFound();
 
         if (appointment.PatientId <= 0)
@@ -52,7 +64,7 @@ public class AppointmentsController : ControllerBase
         if (appointment.AppointmentDate < DateTime.Now)
             return BadRequest("Дата записи не может быть в прошлом");
 
-        var patientExists = PatientsController.Patients.Any(p => p.Id == appointment.PatientId);
+        var patientExists = await _db.Patients.AnyAsync(p => p.Id == appointment.PatientId);
         if (!patientExists)
             return BadRequest("Пациент с таким ID не найден");
 
@@ -61,15 +73,18 @@ public class AppointmentsController : ControllerBase
         existing.AppointmentDate = appointment.AppointmentDate;
         existing.Status = appointment.Status;
 
+        await _db.SaveChangesAsync();
         return Ok(existing);
     }
 
     [HttpDelete("{id}")]
-    public ActionResult Delete(int id)
+    public async Task<ActionResult> Delete(int id)
     {
-        var existing = _appointments.FirstOrDefault(a => a.Id == id);
+        var existing = await _db.Appointments.FirstOrDefaultAsync(a => a.Id == id);
         if (existing == null) return NotFound();
-        _appointments.Remove(existing);
+
+        _db.Appointments.Remove(existing);
+        await _db.SaveChangesAsync();
         return NoContent();
     }
 }

@@ -1,60 +1,80 @@
 using Microsoft.AspNetCore.Mvc;
 using MedicalApi.Models;
+using MedicalApi.Data;
+using Microsoft.EntityFrameworkCore;
 
 [ApiController]
 [Route("api/[controller]")]
 public class SpravkaTypesController : ControllerBase
 {
-    public static List<SpravkaType> Types = new List<SpravkaType>
-    {
-        new SpravkaType { Id = 1, Name = "Справка 083", Price = 100, ValidDays = 30, NeedDoctor = false, IsForChildren = false },
-        new SpravkaType { Id = 2, Name = "Санитарная книжка", Price = 750, ValidDays = 365, NeedDoctor = true, IsForChildren = false },
-        new SpravkaType { Id = 3, Name = "Справка в бассейн", Price = 200, ValidDays = 90, NeedDoctor = true, IsForChildren = true },
-        new SpravkaType { Id = 4, Name = "Справка для водительских прав", Price = 500, ValidDays = 365, NeedDoctor = true, IsForChildren = false }
-    };
+    private readonly MedicalDbContext _db;
 
+    public SpravkaTypesController(MedicalDbContext db)
+    {
+        _db = db;
+    }
+
+    // GET: api/SpravkaTypes
     [HttpGet]
-    public List<SpravkaType> GetAll() => Types;
-
-    [HttpGet("{id}")]
-    public ActionResult<SpravkaType> GetById(int id)
+    public async Task<ActionResult<List<SpravkaType>>> GetAll()
     {
-        var t = Types.FirstOrDefault(x => x.Id == id);
+        return await _db.SpravkaTypes.ToListAsync();
+    }
+
+    // GET: api/SpravkaTypes/5
+    [HttpGet("{id}")]
+    public async Task<ActionResult<SpravkaType>> GetById(int id)
+    {
+        var t = await _db.SpravkaTypes.FirstOrDefaultAsync(x => x.Id == id);
         if (t == null) return NotFound();
         return t;
     }
 
+    // POST: api/SpravkaTypes
     [HttpPost]
-    public ActionResult<SpravkaType> Create(SpravkaType type)
+    public async Task<ActionResult<SpravkaType>> Create(SpravkaType type)
     {
-        if (string.IsNullOrWhiteSpace(type.Name)) return BadRequest("Название не может быть пустым");
-        if (type.Price <= 0) return BadRequest("Цена должна быть больше 0");
-        type.Id = Types.Any() ? Types.Max(s=>s.Id) +1 :1;
-        Types.Add(type);
+        if (string.IsNullOrWhiteSpace(type.Name)) 
+            return BadRequest("Название не может быть пустым");
+        if (type.Price <= 0) 
+            return BadRequest("Цена должна быть больше 0");
+
+        _db.SpravkaTypes.Add(type);
+        await _db.SaveChangesAsync();
         return CreatedAtAction(nameof(GetById), new { id = type.Id }, type);
     }
 
+    // PUT: api/SpravkaTypes/5
     [HttpPut("{id}")]
-    public ActionResult<SpravkaType> Update(int id, SpravkaType type)
+    public async Task<ActionResult<SpravkaType>> Update(int id, SpravkaType type)
     {
-        var existing = Types.FirstOrDefault(t => t.Id == id);
+        var existing = await _db.SpravkaTypes.FirstOrDefaultAsync(t => t.Id == id);
         if (existing == null) return NotFound();
-        if (string.IsNullOrWhiteSpace(type.Name)) return BadRequest("Название не может быть пустым");
-        if (type.Price <= 0) return BadRequest("Цена должна быть больше 0");
+        
+        if (string.IsNullOrWhiteSpace(type.Name)) 
+            return BadRequest("Название не может быть пустым");
+        if (type.Price <= 0) 
+            return BadRequest("Цена должна быть больше 0");
+
         existing.Name = type.Name;
         existing.Price = type.Price;
         existing.ValidDays = type.ValidDays;
         existing.NeedDoctor = type.NeedDoctor;
         existing.IsForChildren = type.IsForChildren;
+
+        await _db.SaveChangesAsync();
         return Ok(existing);
     }
 
+    // DELETE: api/SpravkaTypes/5
     [HttpDelete("{id}")]
-    public ActionResult Delete(int id)
+    public async Task<ActionResult> Delete(int id)
     {
-        var existing = Types.FirstOrDefault(t => t.Id == id);
+        var existing = await _db.SpravkaTypes.FirstOrDefaultAsync(t => t.Id == id);
         if (existing == null) return NotFound();
-        Types.Remove(existing);
+
+        _db.SpravkaTypes.Remove(existing);
+        await _db.SaveChangesAsync();
         return NoContent();
     }
 }
