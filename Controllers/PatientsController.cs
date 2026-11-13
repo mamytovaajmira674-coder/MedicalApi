@@ -76,8 +76,9 @@ public class PatientsController : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(patient.Name))
             return "Имя пациента не может быть пустым";
-        if (patient.BirthDate > DateTime.Now)
-            return "Дата рождения не может быть в будущем";
+        if (patient.BirthDate > DateOnly.FromDateTime(DateTime.Now))
+             return "Дата рождения не может быть в будущем";
         return null;
+        }
+           
     }
-}
