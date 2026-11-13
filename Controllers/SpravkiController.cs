@@ -10,11 +10,32 @@ public class SpravkiController : ControllerBase
     private readonly MedicalDbContext _db;
     public SpravkiController(MedicalDbContext db) { _db = db; }
 
-       [HttpGet]
-public async Task<ActionResult<List<Spravka>>> GetAll()
-{
-    return await _db.Spravki.ToListAsync();
-}
+          [HttpGet]
+    public async Task<ActionResult<List<Spravka>>> GetAll(int? patientId, decimal? minPrice, string? sort)
+    {
+        IQueryable<Spravka> query = _db.Spravki;
+
+        if (patientId != null)
+        {
+            query = query.Where(s => s.PatientId == patientId);
+        }
+
+        if (minPrice != null)
+        {
+            query = query.Where(s => s.Price >= minPrice);
+        }
+
+        if (sort == "price")
+        {
+            query = query.OrderBy(s => s.Price);
+        }
+        else
+        {
+            query = query.OrderBy(s => s.Id);
+        }
+
+        return await query.ToListAsync();
+    }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<Spravka>> GetById(int id)

@@ -11,19 +11,21 @@ public class PatientsController : ControllerBase
 
     public PatientsController(MedicalDbContext db) { _db = db; }
 
-            [HttpGet]
+    // 1. GET: поиск пациентов (с фильтром по имени)
+    [HttpGet]
     public async Task<List<Patient>> GetAll(string? name)
     {
         IQueryable<Patient> query = _db.Patients;
         
         if (name != null)
         {
-            // Поиск без учета регистра (ILIKE в PostgreSQL)
             query = query.Where(p => EF.Functions.ILike(p.Name, $"%{name}%"));
         }
         
         return await query.OrderBy(p => p.Name).ToListAsync();
     }
+
+    // 2. GET: получить одного пациента по Id
     [HttpGet("{id}")]
     public async Task<ActionResult<Patient>> GetById(int id)
     {
@@ -31,6 +33,18 @@ public class PatientsController : ControllerBase
         return p == null ? NotFound() : p;
     }
 
+    // 3. GET: получить все справки пациента (Шаг 3)
+    [HttpGet("spravki/{id}")]
+    public async Task<ActionResult<List<Spravka>>> GetSpravki(int id)
+    {
+        var patient = await _db.Patients.FirstOrDefaultAsync(p => p.Id == id);
+        if (patient == null) return NotFound("Пациент не найден");
+
+        var spravki = await _db.Spravki.Where(s => s.PatientId == id).ToListAsync();
+        return spravki;
+    }
+
+    // 4. POST: создать пациента
     [HttpPost]
     public async Task<ActionResult<Patient>> Create(Patient patient)
     {
@@ -41,6 +55,7 @@ public class PatientsController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = patient.Id }, patient);
     }
 
+    // 5. PUT: обновить пациента
     [HttpPut("{id}")]
     public async Task<ActionResult<Patient>> Update(int id, Patient patient)
     {
@@ -59,6 +74,7 @@ public class PatientsController : ControllerBase
         return Ok(existing);
     }
 
+    // 6. DELETE: удалить пациента
     [HttpDelete("{id}")]
     public async Task<ActionResult> Delete(int id)
     {
@@ -69,6 +85,27 @@ public class PatientsController : ControllerBase
         return NoContent();
     }
 
+        [HttpGet("/api/stats")]
+    public async Task<ActionResult> GetStats()
+    {
+        // Считаем количество пациентов (CountAsync)
+        var patientCount = await _db.Patients.CountAsync();
+        
+        // Считаем количество справок (CountAsync)
+        var spravkaCount = await _db.Spravki.CountAsync();
+        
+        // Считаем общую сумму всех справок (SumAsync)
+        var totalSum = await _db.Spravki.SumAsync(s => s.Price);
+
+        return Ok(new
+        {
+            Patients = patientCount,
+            Spravki = spravkaCount,
+            TotalSum = totalSum
+        });
+    }
+
+    // Метод проверки
     private string? Validate(Patient p)
     {
         if (string.IsNullOrWhiteSpace(p.Name)) return "Имя не может быть пустым";
