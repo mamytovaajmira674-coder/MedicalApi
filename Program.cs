@@ -1,5 +1,9 @@
 using Microsoft.OpenApi;
+using MedicalApi.Data;
+using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddDbContext<MedicalDbContext>(o =>
+    o.UseNpgsql(builder.Configuration.GetConnectionString("Medical")));
 
 builder.Services.AddControllers();
 builder.Services.AddCors(); //ДОБАВЛЕНО: разрешаем запросы с других адресов (для test.html)
