@@ -1,6 +1,6 @@
-using Microsoft.AspNetCore.Mvc;
-using MedicalApi.Models;
 using MedicalApi.Data;
+using MedicalApi.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 [ApiController]
@@ -8,11 +8,7 @@ using Microsoft.EntityFrameworkCore;
 public class AppointmentsController : ControllerBase
 {
     private readonly MedicalDbContext _db;
-
-    public AppointmentsController(MedicalDbContext db)
-    {
-        _db = db;
-    }
+    public AppointmentsController(MedicalDbContext db) { _db = db; }
 
     [HttpGet]
     public async Task<ActionResult<List<Appointment>>> GetAll()
@@ -24,26 +20,17 @@ public class AppointmentsController : ControllerBase
     public async Task<ActionResult<Appointment>> GetById(int id)
     {
         var a = await _db.Appointments.FirstOrDefaultAsync(x => x.Id == id);
-        if (a == null) return NotFound();
-        return a;
+        return a == null ? NotFound() : a;
     }
 
     [HttpPost]
     public async Task<ActionResult<Appointment>> Create(Appointment appointment)
     {
-        // Проверки данных
-        if (appointment.PatientId <= 0)
-            return BadRequest("ID пациента должен быть больше 0");
-        if (string.IsNullOrWhiteSpace(appointment.DoctorName))
-            return BadRequest("Имя врача не может быть пустым");
-            
-        // ВНИМАНИЕ: Если у вас ошибка с DateTime, замените проверку ниже
-        if (appointment.AppointmentDate < DateTime.Now)
-            return BadRequest("Дата записи не может быть в прошлом");
+        if (appointment.PatientId <= 0) return BadRequest("ID пациента должен быть больше 0");
+        if (string.IsNullOrWhiteSpace(appointment.DoctorName)) return BadRequest("Имя врача не может быть пустым");
+        if (appointment.AppointmentDate < DateTime.Now) return BadRequest("Дата записи не может быть в прошлом");
 
-        // Проверка, что пациент существует (через базу данных)
-        var patientExists = await _db.Patients.AnyAsync(p => p.Id == appointment.PatientId);
-        if (!patientExists)
+        if (!await _db.Patients.AnyAsync(p => p.Id == appointment.PatientId))
             return BadRequest("Пациент с таким ID не найден");
 
         _db.Appointments.Add(appointment);
@@ -57,15 +44,11 @@ public class AppointmentsController : ControllerBase
         var existing = await _db.Appointments.FirstOrDefaultAsync(a => a.Id == id);
         if (existing == null) return NotFound();
 
-        if (appointment.PatientId <= 0)
-            return BadRequest("ID пациента должен быть больше 0");
-        if (string.IsNullOrWhiteSpace(appointment.DoctorName))
-            return BadRequest("Имя врача не может быть пустым");
-        if (appointment.AppointmentDate < DateTime.Now)
-            return BadRequest("Дата записи не может быть в прошлом");
+        if (appointment.PatientId <= 0) return BadRequest("ID пациента должен быть больше 0");
+        if (string.IsNullOrWhiteSpace(appointment.DoctorName)) return BadRequest("Имя врача не может быть пустым");
+        if (appointment.AppointmentDate < DateTime.Now) return BadRequest("Дата записи не может быть в прошлом");
 
-        var patientExists = await _db.Patients.AnyAsync(p => p.Id == appointment.PatientId);
-        if (!patientExists)
+        if (!await _db.Patients.AnyAsync(p => p.Id == appointment.PatientId))
             return BadRequest("Пациент с таким ID не найден");
 
         existing.PatientId = appointment.PatientId;
@@ -82,7 +65,6 @@ public class AppointmentsController : ControllerBase
     {
         var existing = await _db.Appointments.FirstOrDefaultAsync(a => a.Id == id);
         if (existing == null) return NotFound();
-
         _db.Appointments.Remove(existing);
         await _db.SaveChangesAsync();
         return NoContent();

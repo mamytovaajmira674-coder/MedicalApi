@@ -7,4 +7,5 @@ public class Patient
     public string PhoneNumber{get;set;} = ""; //поле телефон
     public bool IsMale{get;set;}//true- woman, false-man
     public string Address{get;set;} = ""; //адрес прописки
+    public string? Email { get; set; }
 }
