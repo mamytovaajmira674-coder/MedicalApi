@@ -11,9 +11,19 @@ public class PatientsController : ControllerBase
 
     public PatientsController(MedicalDbContext db) { _db = db; }
 
-    [HttpGet]
-    public async Task<List<Patient>> GetAll() => await _db.Patients.ToListAsync();
-
+            [HttpGet]
+    public async Task<List<Patient>> GetAll(string? name)
+    {
+        IQueryable<Patient> query = _db.Patients;
+        
+        if (name != null)
+        {
+            // Поиск без учета регистра (ILIKE в PostgreSQL)
+            query = query.Where(p => EF.Functions.ILike(p.Name, $"%{name}%"));
+        }
+        
+        return await query.OrderBy(p => p.Name).ToListAsync();
+    }
     [HttpGet("{id}")]
     public async Task<ActionResult<Patient>> GetById(int id)
     {

@@ -10,19 +10,11 @@ public class SpravkiController : ControllerBase
     private readonly MedicalDbContext _db;
     public SpravkiController(MedicalDbContext db) { _db = db; }
 
-    [HttpGet]
-        [HttpGet]
-    public async Task<ActionResult> GetAll()
-    {
-        // Вариант A: условие уходит в базу (WHERE в SQL)
-        var a = await _db.Spravki.Where(s => s.Price > 300).ToListAsync();
-        
-        // Вариант B: сначала вся таблица, потом условие в памяти (без WHERE в SQL)
-        var all = await _db.Spravki.ToListAsync();
-        var b = all.Where(s => s.Price > 300).ToList();
-
-        return Ok(new { A = a, B = b });
-    }
+       [HttpGet]
+public async Task<ActionResult<List<Spravka>>> GetAll()
+{
+    return await _db.Spravki.ToListAsync();
+}
 
     [HttpGet("{id}")]
     public async Task<ActionResult<Spravka>> GetById(int id)
