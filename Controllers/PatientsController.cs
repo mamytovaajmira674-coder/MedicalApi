@@ -50,6 +50,8 @@ public class PatientsController : ControllerBase
     {
         var error = Validate(patient);
         if (error != null) return BadRequest(error);
+
+        patient.Id = 0; // добвленная строка задание 9 баги
         _db.Patients.Add(patient);
         await _db.SaveChangesAsync();
         return CreatedAtAction(nameof(GetById), new { id = patient.Id }, patient);

@@ -26,6 +26,7 @@ public class AppointmentsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Appointment>> Create(Appointment appointment)
     {
+        appointment.Id = 0;
         if (appointment.PatientId <= 0) return BadRequest("ID пациента должен быть больше 0");
         if (string.IsNullOrWhiteSpace(appointment.DoctorName)) return BadRequest("Имя врача не может быть пустым");
         if (appointment.AppointmentDate < DateTime.Now) return BadRequest("Дата записи не может быть в прошлом");

@@ -26,6 +26,7 @@ public class SpravkaTypesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<SpravkaType>> Create(SpravkaType type)
     {
+        type.Id = 0;
         if (string.IsNullOrWhiteSpace(type.Name)) return BadRequest("Название не может быть пустым");
         if (type.Price <= 0) return BadRequest("Цена должна быть больше 0");
         _db.SpravkaTypes.Add(type);
@@ -54,6 +55,7 @@ public class SpravkaTypesController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<ActionResult> Delete(int id)
     {
+        
         var existing = await _db.SpravkaTypes.FirstOrDefaultAsync(t => t.Id == id);
         if (existing == null) return NotFound();
         _db.SpravkaTypes.Remove(existing);
