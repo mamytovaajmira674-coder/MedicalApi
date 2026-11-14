@@ -153,7 +153,7 @@ namespace MedicalApi.Migrations
                     b.HasOne("MedicalApi.Models.SpravkaType", null)
                         .WithMany()
                         .HasForeignKey("SpravkaTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 #pragma warning restore 612, 618

@@ -27,6 +27,7 @@ public class MedicalDbContext : DbContext
         modelBuilder.Entity<Spravka>()
             .HasOne<SpravkaType>()
             .WithMany()
-            .HasForeignKey(s => s.SpravkaTypeId);
+            .HasForeignKey(s => s.SpravkaTypeId)
+            .OnDelete(DeleteBehavior.Restrict); // <-- Добавить
     }
 }

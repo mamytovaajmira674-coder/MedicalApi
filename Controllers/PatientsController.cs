@@ -11,7 +11,7 @@ public class PatientsController : ControllerBase
 
     public PatientsController(MedicalDbContext db) { _db = db; }
 
-    // 1. GET: поиск пациентов (с фильтром по имени)
+    // 1. GET: поиск пациентов
     [HttpGet]
     public async Task<List<Patient>> GetAll(string? name)
     {
@@ -33,8 +33,8 @@ public class PatientsController : ControllerBase
         return p == null ? NotFound() : p;
     }
 
-    // 3. GET: получить все справки пациента (Шаг 3)
-    [HttpGet("spravki/{id}")]
+    // 3. GET: получить все справки пациента
+    [HttpGet("{id}/spravki")]
     public async Task<ActionResult<List<Spravka>>> GetSpravki(int id)
     {
         var patient = await _db.Patients.FirstOrDefaultAsync(p => p.Id == id);
@@ -69,32 +69,38 @@ public class PatientsController : ControllerBase
         existing.PhoneNumber = patient.PhoneNumber;
         existing.IsMale = patient.IsMale;
         existing.Address = patient.Address;
+        existing.Email = patient.Email;
 
         await _db.SaveChangesAsync();
         return Ok(existing);
     }
 
-    // 6. DELETE: удалить пациента
+    // 6. DELETE: удалить пациента (с проверкой на справки)
     [HttpDelete("{id}")]
+    //ПРОверка: есть ли у пациента справки?
     public async Task<ActionResult> Delete(int id)
     {
         var existing = await _db.Patients.FirstOrDefaultAsync(p => p.Id == id);
         if (existing == null) return NotFound();
+
+        // ПРОВЕРКА: есть ли у пациента справки?
+        var hasSpravki = await _db.Spravki.AnyAsync(s => s.PatientId == id);
+        if (hasSpravki)
+        {
+            return BadRequest("Нельзя удалить пациента, у него есть справки");
+        }
+
         _db.Patients.Remove(existing);
         await _db.SaveChangesAsync();
         return NoContent();
     }
 
-        [HttpGet("/api/stats")]
+    // 7. GET: статистика
+    [HttpGet("/api/stats")]
     public async Task<ActionResult> GetStats()
     {
-        // Считаем количество пациентов (CountAsync)
         var patientCount = await _db.Patients.CountAsync();
-        
-        // Считаем количество справок (CountAsync)
         var spravkaCount = await _db.Spravki.CountAsync();
-        
-        // Считаем общую сумму всех справок (SumAsync)
         var totalSum = await _db.Spravki.SumAsync(s => s.Price);
 
         return Ok(new
