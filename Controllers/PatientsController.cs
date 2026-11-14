@@ -53,7 +53,7 @@ public class PatientsController : ControllerBase
 
         patient.Id = 0; // добвленная строка задание 9 баги
         _db.Patients.Add(patient);
-        await _db.SaveChangesAsync();
+       await _db.SaveChangesAsync(); //временно удалено
         return CreatedAtAction(nameof(GetById), new { id = patient.Id }, patient);
     }
 
