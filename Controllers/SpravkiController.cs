@@ -45,7 +45,8 @@ public class SpravkiController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Spravka>> Create(Spravka spravka)
+    [HttpPost]
+public async Task<ActionResult<Spravka>> Create([FromBody] Spravka spravka)
     {
         if (!await _db.Patients.AnyAsync(p => p.Id == spravka.PatientId))
             return BadRequest("Пациент с таким ID не найден");

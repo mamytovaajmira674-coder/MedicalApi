@@ -13,7 +13,6 @@ public class MedicalDbContext : DbContext
     public DbSet<Spravka> Spravki { get; set; }
     public DbSet<SpravkaType> SpravkaTypes { get; set; }
     public DbSet<Appointment> Appointments { get; set; }
-    // сюда же таблица вашего модуля
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -21,7 +20,8 @@ public class MedicalDbContext : DbContext
         modelBuilder.Entity<Spravka>()
             .HasOne<Patient>()
             .WithMany()
-            .HasForeignKey(s => s.PatientId);
+            .HasForeignKey(s => s.PatientId)
+            .OnDelete(DeleteBehavior.Restrict); // <-- ДОБАВЛЕНА ЗАПРЕТ НА УДАЛЕНИЕ
 
         // у справки один вид, у вида много справок, связь через SpravkaTypeId
         modelBuilder.Entity<Spravka>()

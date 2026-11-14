@@ -147,7 +147,7 @@ namespace MedicalApi.Migrations
                     b.HasOne("MedicalApi.Models.Patient", null)
                         .WithMany()
                         .HasForeignKey("PatientId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("MedicalApi.Models.SpravkaType", null)
